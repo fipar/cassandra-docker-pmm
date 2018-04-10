@@ -10,5 +10,6 @@ RUN apt-get update; \
     apt-get -y install pmm-client;
 
 COPY cassandra-prometheus-2.0.0-jar-with-dependencies.jar /usr/local
+COPY configure-pmm-client.sh /usr/local/bin 
 
 ENV JVM_OPTS "$JVM_OPTS -javaagent:/usr/local/cassandra-prometheus-2.0.0-jar-with-dependencies.jar=7400"

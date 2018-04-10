@@ -8,3 +8,7 @@ RUN apt-get update; \
     dpkg -i percona-release_0.1-4.$(lsb_release -sc)_all.deb; \
     apt-get update; \
     apt-get -y install pmm-client;
+
+COPY cassandra-prometheus-2.0.0-jar-with-dependencies.jar /usr/local
+
+ENV JVM_OPTS "$JVM_OPTS -javaagent:/usr/local/cassandra-prometheus-2.0.0-jar-with-dependencies.jar=7400"

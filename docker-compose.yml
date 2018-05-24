@@ -1,4 +1,4 @@
-version: '3'
+version: '2'
 
 ################################################
 # adjacents docker-compose file for cassandra + PMM
@@ -34,7 +34,7 @@ services:
             - ./cassandra-prometheus-2.0.0-jar-with-dependencies.jar:/usr/local/cassandra-prometheus-2.0.0-jar-with-dependencies.jar
             - ./configure-pmm-client.sh:/usr/local/bin/configure-pmm-client.sh
         ports:
-          - "127.0.0.1:17400:7400"
+          - "127.0.0.1:7401:7400"
         environment:
             - CASSANDRA_SEEDS=DC1C1,DC1C2,DC2C1,DC2C2
             - CASSANDRA_CLUSTER_NAME=Dev_Cluster
@@ -56,6 +56,10 @@ services:
         volumes:
             - ./n2data:/var/lib/cassandra
             - ./configuration/cassandra-env.sh:/etc/cassandra/cassandra-env.sh
+            - ./cassandra-prometheus-2.0.0-jar-with-dependencies.jar:/usr/local/cassandra-prometheus-2.0.0-jar-with-dependencies.jar
+            - ./configure-pmm-client.sh:/usr/local/bin/configure-pmm-client.sh
+        ports:
+          - "127.0.0.1:7402:7400"
         environment:
             - CASSANDRA_SEEDS=DC1C1,DC1C2,DC2C1,DC2C2
             - CASSANDRA_CLUSTER_NAME=Dev_Cluster
@@ -79,6 +83,10 @@ services:
         volumes:
             - ./n3data:/var/lib/cassandra
             - ./configuration/cassandra-env.sh:/etc/cassandra/cassandra-env.sh
+            - ./cassandra-prometheus-2.0.0-jar-with-dependencies.jar:/usr/local/cassandra-prometheus-2.0.0-jar-with-dependencies.jar
+            - ./configure-pmm-client.sh:/usr/local/bin/configure-pmm-client.sh
+        ports:
+          - "127.0.0.1:7403:7400"
         environment:
             - CASSANDRA_SEEDS=DC1C1,DC1C2,DC2C1,DC2C2
             - CASSANDRA_CLUSTER_NAME=Dev_Cluster
@@ -102,6 +110,10 @@ services:
         volumes:
             - ./n4data:/var/lib/cassandra
             - ./configuration/cassandra-env.sh:/etc/cassandra/cassandra-env.sh
+            - ./cassandra-prometheus-2.0.0-jar-with-dependencies.jar:/usr/local/cassandra-prometheus-2.0.0-jar-with-dependencies.jar
+            - ./configure-pmm-client.sh:/usr/local/bin/configure-pmm-client.sh
+        ports:
+          - "127.0.0.1:7404:7400"
         environment:
             - CASSANDRA_SEEDS=DC1C1,DC1C2,DC2C1,DC2C2
             - CASSANDRA_CLUSTER_NAME=Dev_Cluster
@@ -123,6 +135,10 @@ services:
         volumes:
             - ./n5data:/var/lib/cassandra
             - ./configuration/cassandra-env.sh:/etc/cassandra/cassandra-env.sh
+            - ./cassandra-prometheus-2.0.0-jar-with-dependencies.jar:/usr/local/cassandra-prometheus-2.0.0-jar-with-dependencies.jar
+            - ./configure-pmm-client.sh:/usr/local/bin/configure-pmm-client.sh
+        ports:
+          - "127.0.0.1:7405:7400"
         environment:
             - CASSANDRA_SEEDS=DC1C1,DC1C2,DC2C1,DC2C2
             - CASSANDRA_CLUSTER_NAME=Dev_Cluster
@@ -146,6 +162,10 @@ services:
         volumes:
             - ./n6data:/var/lib/cassandra
             - ./configuration/cassandra-env.sh:/etc/cassandra/cassandra-env.sh
+            - ./cassandra-prometheus-2.0.0-jar-with-dependencies.jar:/usr/local/cassandra-prometheus-2.0.0-jar-with-dependencies.jar
+            - ./configure-pmm-client.sh:/usr/local/bin/configure-pmm-client.sh
+        ports:
+          - "127.0.0.1:7406:7400"
         environment:
             - CASSANDRA_SEEDS=DC1C1,DC1C2,DC2C1,DC2C2
             - CASSANDRA_CLUSTER_NAME=Dev_Cluster
@@ -163,20 +183,39 @@ services:
 #####################################################
 # PMM
 
-    pmm-server:
-        container_name: pmm-server
-        image: percona/pmm-server:latest
-        hostname: pmm-server
+    pmm-data:
+        build: .
+        image: percona/pmm-server
+        container_name: pmm-data
+        networks: 
+            - myring
         volumes:
           - /opt/prometheus/data
           - /opt/consul-data
           - /var/lib/mysql
           - /var/lib/grafana
+        entrypoint: /bin/true
+
+    pmm-server:
+        build: .
+        container_name: pmm-server
+        image: percona/pmm-server
+        restart: always
+        networks: 
+            - myring
         ports:
           - "80:80"
-        networks:
-          myring:
-            ipv4_address: 172.16.238.31
+        volumes_from:
+          - pmm-data
+        environment:
+          - METRICS_RETENTION=720h
+          - METRICS_MEMORY=262144
+          - METRICS_RESOLUTION=1s
+          - QUERIES_RETENTION=8
+          - ORCHESTRATOR_USER=orc_client_user
+          - ORCHESTRATOR_PASSWORD=orc_client_password
+          - SERVER_USER=pmm
+          - SERVER_PASSWORD=
 
 ########################################################
 # network
